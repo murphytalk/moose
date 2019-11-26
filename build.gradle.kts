@@ -40,13 +40,10 @@ application {
     mainClassName = "moose.AppKt"
 }
 
-val rel = "1.0"
-
 val shadowJar: ShadowJar by tasks
-
 // also see: https://github.com/csolem/gradle-shadow-jar-with-kotlin-dsl/blob/master/build.gradle.kts
 shadowJar.apply {
-    archiveVersion.set(rel)
+    archiveVersion.set("1.0")
 }
 
 tasks {
