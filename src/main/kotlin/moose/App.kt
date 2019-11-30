@@ -26,9 +26,10 @@ object Timestamp {
 }
 
 class MarketDataPublisher : AbstractVerticle() {
-    private companion object{
+    private companion object {
         val logger: Logger = LoggerFactory.getLogger(MarketDataPublisher::class.java)
     }
+
     private val snapshot = mutableMapOf<String, JsonObject>()
     override fun start() {
         vertx.eventBus().consumer<JsonObject>(Address.marketdata_publisher.name) { m ->

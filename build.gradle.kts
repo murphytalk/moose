@@ -1,10 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val projectVersion = "1.0"
+
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.3.41"
-    //https://imperceptiblethoughts.com/shadow/introduction/
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+
+    //https://github.com/jponge/vertx-gradle-plugin
+    id("io.vertx.vertx-plugin") version "1.0.1"
+
     // Apply the application plugin to add support for building a CLI application.
     application
 }
@@ -20,8 +24,8 @@ dependencies {
     //kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     //vert.x
-    implementation("io.vertx:vertx-web:3.8.4")
-    implementation("io.vertx:vertx-lang-kotlin:3.8.4")
+    implementation("io.vertx:vertx-web")
+    implementation("io.vertx:vertx-lang-kotlin")
     //log
     implementation("ch.qos.logback:logback-classic:1.2.3")
 
@@ -32,12 +36,9 @@ dependencies {
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
 
-val mainVerticleName = "moose.MainVerticle"
-val projectVersion = "1.0"
-
-application {
-    // Define the main class for the application.
-    mainClassName = "io.vertx.core.Launcher"
+vertx { // (1)
+    vertxVersion = "3.8.4"
+    mainVerticle = "moose.MainVerticle"
 }
 
 tasks.withType<KotlinCompile> {
@@ -46,22 +47,9 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-// also see: https://github.com/csolem/gradle-shadow-jar-with-kotlin-dsl/blob/master/build.gradle.kts
-tasks {
+tasks{
     shadowJar{
         archiveVersion.set(projectVersion)
-        manifest {
-            attributes.apply {
-                put("Main-Verticle", mainVerticleName)
-            }
-        }
-        mergeServiceFiles{
-            include("META-INF/services/io.vertx.core.spi.VerticleFactory")
-        }
-    }
-    build {
-        dependsOn(shadowJar)
     }
 }
-
 
