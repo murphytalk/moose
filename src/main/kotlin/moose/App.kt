@@ -35,6 +35,7 @@ class MarketDataPublisher : AbstractVerticle() {
             val payload = m.body()
             payload.put("sent_time", System.currentTimeMillis())
             snapshot[payload.getString("ticker")] = payload
+            vertx.eventBus().publish(Address.marketdata_status.name, payload)
             logger.debug(
                     "Ticker {}, price={}, received at {}, published at {}",
                     payload.getString("ticker"),
