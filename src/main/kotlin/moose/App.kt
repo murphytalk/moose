@@ -1,9 +1,11 @@
 package moose
 
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Promise
+import io.vertx.config.ConfigRetriever
+import io.vertx.config.ConfigRetrieverOptions
+import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.config.configStoreOptionsOf
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
 import moose.marketdata.EndPoint
@@ -30,8 +32,7 @@ enum class MarketDataAction {
 
 enum class ErrorCodes {
     NO_ACTION_SPECIFIED,
-    BAD_ACTION,
-    DB_ERROR
+    BAD_ACTION
 }
 
 object Timestamp {
@@ -42,6 +43,7 @@ object Timestamp {
 class MainVerticle : AbstractVerticle() {
     private companion object {
         val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
+        var config : JsonObject? = null
     }
 
     inner class MarketDataEndpoint : EndPoint {
@@ -61,21 +63,48 @@ class MainVerticle : AbstractVerticle() {
         }
     }
 
-    override fun start(promise: Promise<Void>) {
-        val publisherDeployment = Promise.promise<String>()
-        vertx.deployVerticle(MarketDataPublisher(), publisherDeployment)
+    private fun setupConfig() : ConfigRetriever{
+        // file lives outside of JAR has priority
+        val storeOptions = listOf(
+                configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "conf/config.yaml")}),
+                configStoreOptionsOf(type="env")
+        )
+        return ConfigRetriever.create(vertx, ConfigRetrieverOptions().setStores(storeOptions))
+    }
 
-        publisherDeployment.future().compose { _ ->
+    override fun start(promise: Promise<Void>) {
+        val configFuture = ConfigRetriever.getConfigAsFuture(setupConfig())
+
+        // chaining future of config load => deploy MD publisher => deploy http => final handle
+        // Note compose() is only get called when future is successful and the parameter is retrieved value
+
+        configFuture.compose { config ->
+            logger.info("Config is loaded {}", config.encodePrettily())
+            MainVerticle.config = config
+            val publisherDeployment = Promise.promise<String>()
+            vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisherDeployment)
+            publisherDeployment.future()
+        }.compose{ _ ->  // deploy id, not used
             val httpDeployment = Promise.promise<String>()
+            val httpConfig = MainVerticle.config!!.getJsonObject("http")
             vertx.deployVerticle(
                     "moose.http.HttpServerVerticle",
-                    DeploymentOptions().setInstances(2),
+                    DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
                     httpDeployment)
             httpDeployment.future()
         }.setHandler { ar ->
             if (ar.succeeded()) {
-                Generator.start(100, 10, 1000, 10, 1000, MarketDataEndpoint())
+                val genConfig = MainVerticle.config!!.getJsonObject("generator")
+                Generator.start(
+                        genConfig.getInteger("tickers"),
+                        genConfig.getInteger("min_price"),
+                        genConfig.getInteger("max_price"),
+                        genConfig.getInteger("min_interval"),
+                        genConfig.getInteger("max_interval"),
+                        MarketDataEndpoint())
                 promise.complete()
+                //all verticles have been deployed, no longer need to to hold it
+                MainVerticle.config = null
             } else {
                 promise.fail(ar.cause())
             }

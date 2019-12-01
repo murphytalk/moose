@@ -1,0 +1,14 @@
+# for random market data generator
+generator:
+  tickers: 100
+  min_price: 100
+  max_price: 1000
+  min_interval: 10
+  max_interval: 500
+
+# for HTTP service
+http:
+  port: 8000
+  # How many http verticals to deploy
+  number: 1
+

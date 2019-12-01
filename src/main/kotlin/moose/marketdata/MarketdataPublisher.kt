@@ -27,7 +27,7 @@ class MarketDataPublisher : AbstractVerticle() {
             }
             when (val action = m.headers()[MarketDataAction.action.name]) {
                 MarketDataAction.tick.name ->
-                    populateTick(m.body())
+                    publishTick(m.body())
                 MarketDataAction.init_paint.name ->
                     initPaint(m)
                 else -> {
@@ -38,7 +38,7 @@ class MarketDataPublisher : AbstractVerticle() {
         }
     }
 
-    private fun populateTick(payload: JsonObject){
+    private fun publishTick(payload: JsonObject){
         payload.put("sent_time", System.currentTimeMillis())
         snapshot[payload.getString("ticker")] = payload
         vertx.eventBus().publish(Address.marketdata_status.name, payload)

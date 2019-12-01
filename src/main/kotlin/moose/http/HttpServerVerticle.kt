@@ -11,6 +11,7 @@ import io.vertx.ext.web.templ.pebble.PebbleTemplateEngine
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
 import moose.Address
+import moose.MainVerticle
 import moose.MarketDataAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,13 +35,13 @@ class HttpServerVerticle() : AbstractVerticle() {
         router.route("/static/*").handler(StaticHandler.create())
         /// API
         val api = Router.router(vertx)
-        // market data init paint
+        //  market data init paint
         api.get("/md/initpaint").handler{ctx -> this.apiInitPaint(ctx)}
         router.mountSubRouter("/api", api)
 
-        server.requestHandler(router).listen(8000) { ar ->
+        server.requestHandler(router).listen(config().getInteger("port")) { ar ->
             if (ar.succeeded()){
-                logger.info("http")
+                logger.info("http started at port {}", config().getInteger("port"))
                 promise.complete()
             }
             else{
