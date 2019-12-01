@@ -7,6 +7,8 @@ import kotlin.concurrent.thread
 
 object Generator {
     private val random = Random()
+    private var th : Thread? = null
+
     @Volatile private var stop = false
 
     internal fun genSymbol(len:Int) : String{
@@ -38,7 +40,7 @@ object Generator {
 
     fun start(numOfTickers: Int, minPrice: Int, maxPrice:Int, intervalMinMs:Int, intervalMaxMs: Int, endPoint: EndPoint){
         val tickers = genTickers(numOfTickers)
-        thread(start = true, name = "market-data-gen-thread") {
+        th = thread(start = true, name = "market-data-gen-thread") {
             val intervalRange = intervalMaxMs - intervalMinMs + 1
             do{
                 val ticker = tickers[random.nextInt(tickers.size)]
@@ -51,5 +53,6 @@ object Generator {
 
    fun stop(){
        stop = true
+       th?.join()
    }
 }
