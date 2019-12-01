@@ -1,0 +1,19 @@
+{% extends "layout.peb" %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css"/>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+        <div class="col-md-12">
+            <table id="mdtable" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0">
+                <thead></thead>
+            </table>
+        </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/static/finance/scripts/common.js"></script>
+{% endblock %}

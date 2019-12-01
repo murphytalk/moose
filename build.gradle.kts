@@ -25,6 +25,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     //vert.x
     implementation("io.vertx:vertx-web")
+    implementation("io.vertx:vertx-web-templ-pebble")
     implementation("io.vertx:vertx-lang-kotlin")
     //log
     implementation("ch.qos.logback:logback-classic:1.2.3")

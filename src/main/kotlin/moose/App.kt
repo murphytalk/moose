@@ -1,7 +1,6 @@
 package moose
 
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
+import io.vertx.core.*
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
 import moose.marketdata.EndPoint
@@ -40,7 +39,15 @@ class MainVerticle : AbstractVerticle() {
     override fun start(promise: Promise<Void>) {
         val publisherDeployment = Promise.promise<String>()
         vertx.deployVerticle(MarketDataPublisher(), publisherDeployment)
-        publisherDeployment.future().setHandler { ar ->
+
+        publisherDeployment.future().compose { _ ->
+            val httpDeployment = Promise.promise<String>()
+            vertx.deployVerticle(
+                    "moose.http.HttpServerVerticle",
+                    DeploymentOptions().setInstances(2),
+                    httpDeployment)
+            httpDeployment.future()
+        }.setHandler { ar ->
             if (ar.succeeded()) {
                 Generator.start(100, 10, 1000, 10, 1000, MarketDataEndpoint())
                 promise.complete()
