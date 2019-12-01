@@ -37,7 +37,7 @@ enum class ErrorCodes {
 
 object Timestamp {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-    fun formatEpoch(epochMillis: Long): String = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.systemDefault()).format(formatter)
+    fun formatEpoch(epochMillis: Long, zone:ZoneId = ZoneId.systemDefault()): String = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), zone).format(formatter)
 }
 
 class MainVerticle : AbstractVerticle() {

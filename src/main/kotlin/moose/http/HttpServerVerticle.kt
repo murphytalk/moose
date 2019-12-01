@@ -3,6 +3,7 @@ package moose.http
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -66,12 +67,12 @@ class HttpServerVerticle() : AbstractVerticle() {
 
     private fun apiInitPaint(routingContext: RoutingContext){
         val options = DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.init_paint.name)
-        vertx.eventBus().request<JsonObject>(Address.marketdata_publisher.name, JsonObject(), options) {reply ->
+        vertx.eventBus().request<JsonArray>(Address.marketdata_publisher.name, null, options) { reply ->
             val restResp = routingContext.response()
             restResp.putHeader("Content-Type", "application/json")
             if (reply.succeeded()){
                 restResp.statusCode = 200
-                val snapshot  = reply.result().body()
+                val snapshot = reply.result().body()
                 restResp.end(snapshot.encode())
             }
             else{
