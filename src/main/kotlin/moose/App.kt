@@ -2,6 +2,7 @@ package moose
 
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
+import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonObject
@@ -14,6 +15,7 @@ import moose.marketdata.MarketDataPublisher
 import moose.marketdata.Ticker
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -64,11 +66,15 @@ class MainVerticle : AbstractVerticle() {
     }
 
     private fun setupConfig() : ConfigRetriever{
-        // file lives outside of JAR has priority
-        val storeOptions = listOf(
-                configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "conf/config.yaml")}),
-                configStoreOptionsOf(type="env")
+        var storeOptions = mutableListOf(
+            configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "config.yaml")}),
+            configStoreOptionsOf(type="env") // will override above
         )
+        val externalConf = "conf/config.yaml"
+        if (File(externalConf).exists()){
+            storeOptions.add(configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to externalConf)}))
+        }
+
         return ConfigRetriever.create(vertx, ConfigRetrieverOptions().setStores(storeOptions))
     }
 
