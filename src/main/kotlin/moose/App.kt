@@ -46,7 +46,7 @@ class MainVerticle : AbstractVerticle() {
         var config : JsonObject? = null
     }
 
-    inner class MarketDataEndpoint : EndPoint {
+    private inner class MarketDataEndpoint : EndPoint {
         override fun onPriceUpdated(ticker: Ticker, price: Int) {
             val msg = json {
                 obj(

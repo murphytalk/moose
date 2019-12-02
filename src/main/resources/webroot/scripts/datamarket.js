@@ -12,11 +12,6 @@ function build_header(table_selector,headers) {
     extra_options = (typeof extra_options !== 'undefined') ?  extra_options: null;
     var lenMenu = lengthMenu==null ? [10, 15, 50, 100] : lengthMenu;
 
-//    var pageLen =  getDataTablePageLength(table_selector);
-//    if(pageLen == null){
-//         pageLen = row_per_page;
-//    }
-
     var parameter = {
         ajax: url,
         pageLength: row_per_page,
@@ -43,11 +38,6 @@ function build_header(table_selector,headers) {
         });
     }
     return $(table_selector).DataTable(parameter);
-/*
-    $(table_selector).on( 'length.dt', function ( e, settings, len ) {
-        setDataTablePageLength(table_selector,len);
-    });
-*/
 };
 
 function capitalizeFLetter(string) {
@@ -89,7 +79,20 @@ $(document).ready(function () {
                 null, //formatter
                 null,
                 cols
-            );      
+            );
+
+            //real time update
+            var eb = new EventBus(window.location.protocol + "//" + window.location.host + "/eventbus");
+            eb.onopen = function () {
+                 eb.registerHandler("marketdata_status", function (error, message) {
+                     if(error){
+                         console.log(error);
+                     }
+                     else if(message && ("address" in message) && message["address"].localeCompare("marketdata_status") == 0) {
+                         console.log(message["body"]);
+                     }
+                 })
+            };
         }
         else{
             console.log("no market data");

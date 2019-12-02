@@ -5,9 +5,12 @@ import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.bridge.PermittedOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.StaticHandler
+import io.vertx.ext.web.handler.sockjs.BridgeOptions
+import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.ext.web.templ.pebble.PebbleTemplateEngine
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
@@ -39,6 +42,12 @@ class HttpServerVerticle() : AbstractVerticle() {
         //  market data init paint
         api.get("/md/initpaint").handler{ctx -> this.apiInitPaint(ctx)}
         router.mountSubRouter("/api", api)
+
+        val sockJSHandler = SockJSHandler.create(vertx);
+        val bridgeOptions = BridgeOptions()
+                .addOutboundPermitted(PermittedOptions().setAddress(Address.marketdata_status.name))
+        sockJSHandler.bridge(bridgeOptions)
+        router.route("/eventbus/*").handler(sockJSHandler)
 
         server.requestHandler(router).listen(config().getInteger("port")) { ar ->
             if (ar.succeeded()){
