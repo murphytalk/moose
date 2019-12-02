@@ -2,6 +2,7 @@ package moose.marketdata
 
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.eventbus.Message
+import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import moose.Address
@@ -40,10 +41,21 @@ class MarketDataPublisher : AbstractVerticle() {
         }
     }
 
+    private fun formatTimestamp(jsonPayload: JsonObject, zone: ZoneId): JsonObject{
+        fun formatEpoch(tick: JsonObject, field: String){
+            tick.put(field,  Timestamp.formatEpoch(tick.getLong(field), zone))
+        }
+        val tick = JsonObject.mapFrom(jsonPayload)
+        formatEpoch(tick, "sent_time")
+        formatEpoch(tick, "received_time")
+        return tick
+    }
+
     internal fun publishTick(payload: JsonObject, sentTime:Long = System.currentTimeMillis()){
         payload.put("sent_time", sentTime)
         snapshot[payload.getString("ticker")] = payload
-        vertx.eventBus().publish(Address.marketdata_status.name, payload)
+        vertx.eventBus().publish(Address.marketdata_status.name, formatTimestamp(payload, ZoneId.systemDefault()))
+        /*
         logger.debug(
                 "Ticker {}, price={}, received at {}, published at {}",
                 payload.getString("ticker"),
@@ -51,21 +63,13 @@ class MarketDataPublisher : AbstractVerticle() {
                 Timestamp.formatEpoch(payload.getLong("received_time")),
                 Timestamp.formatEpoch(payload.getLong("sent_time"))
         )
+         */
     }
 
     internal fun initPaint(m : Message<JsonObject>, zone:ZoneId = ZoneId.systemDefault()) {
         // flatten {'ticker': ticker_dict,} to [ticker_dict,]
         // also format epoch time to string
-        fun formatEpoch(tick: JsonObject, field: String){
-            tick.put(field,  Timestamp.formatEpoch(tick.getLong(field), zone))
-        }
-        val data = snapshot.map { i ->
-            val tick = JsonObject.mapFrom(i.value)
-            formatEpoch(tick, "sent_time")
-            formatEpoch(tick, "received_time")
-            tick
-        }
-        m.reply(JsonArray(data))
+        m.reply(JsonArray(snapshot.map {formatTimestamp(it.value, zone)}))
     }
 }
 

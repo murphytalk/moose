@@ -8,38 +8,6 @@ function build_header(table_selector,headers) {
     $(table_selector+" thead").replaceWith(head);
 };
 
- function populate_data(table_selector,url,col_order,row_per_page,lengthMenu,colDefs,footer,extra_options) {
-    extra_options = (typeof extra_options !== 'undefined') ?  extra_options: null;
-    var lenMenu = lengthMenu==null ? [10, 15, 50, 100] : lengthMenu;
-
-    var parameter = {
-        ajax: url,
-        pageLength: row_per_page,
-    };
-
-    if(col_order != null){
-        parameter['order'] = col_order;
-    }
-    if(lenMenu != null ){
-        parameter['lengthMenu'] = lenMenu;
-    }
-
-    if(colDefs != null){
-        parameter['columnDefs'] = colDefs;
-    }
-
-    if(footer != null){
-        parameter["footerCallback"] = footer;
-    }
-
-    if(extra_options != null){
-        $.each(extra_options,function (n,v) {
-           parameter[n] = v;
-        });
-    }
-    return $(table_selector).DataTable(parameter);
-};
-
 function capitalizeFLetter(string) {
     return string[0].toUpperCase() +  string.slice(1);
 }
@@ -51,35 +19,32 @@ $(document).ready(function () {
             items =items == null ? 15 : parseInt(items);
 
             var header = ['Ticker'];
-            var cols = {'columns': [{ "data": "ticker" }]};
+            var cols = [{ "data": "ticker" }];
             for (var key in data[0]){
                 if(key.localeCompare("ticker") !=0 && ! key.includes("_time") ){
                     header.push(capitalizeFLetter(key));
-                    cols['columns'].push({ "data": key });
+                    cols.push({ "data": key });
                 }
             }
-            cols['columns'].push({ "data": "received_time" });
-            cols['columns'].push({ "data": "sent_time" });
+            cols.push({ "data": "received_time" });
+            cols.push({ "data": "sent_time" });
             header.push("Rcv Time");
             header.push("Sent Time");
             build_header('#mdtable', header);
+
             // install item per page menu callback
             $('#mdtable').on('length.dt',function(e,settings, len){
                 window.localStorage.setItem('md_items_per_page', len.toString());
             });
 
-            populate_data(
-                '#mdtable',
-                function(d,callback,s){
-                    callback({'data':data});
-                },
-                [[0, 'asc'], [1, 'asc']],
-                items,
-                [10, 20, 50, 100],
-                null, //formatter
-                null,
-                cols
-            );
+            $('#mdtable').DataTable({
+                data: data,
+                pageLength: items,
+                order: [[0, 'asc'], [1, 'asc']],
+                lengthMenu: [10, 15, 50, 100],
+                columns: cols,
+                rowId: 'ticker'
+            });
 
             //real time update
             var eb = new EventBus(window.location.protocol + "//" + window.location.host + "/eventbus");
@@ -88,8 +53,16 @@ $(document).ready(function () {
                      if(error){
                          console.log(error);
                      }
-                     else if(message && ("address" in message) && message["address"].localeCompare("marketdata_status") == 0) {
-                         console.log(message["body"]);
+                     else if(message && ("body" in message)) {
+                         var t = $('#mdtable').DataTable();
+
+                         var row = t.row('#' + message["body"]["ticker"])
+                         if(row.data()){
+                             row.data(message["body"]);
+                         }
+                         else{
+                             t.row.add(message["body"]).draw( false );
+                         }
                      }
                  })
             };

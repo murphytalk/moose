@@ -1,6 +1,6 @@
 # for random market data generator
 generator:
-  tickers: 100
+  tickers: 50
   min_price: 100
   max_price: 1000
   min_interval: 10

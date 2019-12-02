@@ -33,16 +33,16 @@ class HttpServerVerticle() : AbstractVerticle() {
         val server = vertx.createHttpServer()
         val router =  Router.router(vertx)
 
-        /// index page
+        //  index page
         router.get("/").handler { ctx -> this.indexPage(ctx)}
-        /// static contents
+        //  static contents
         router.route("/static/*").handler(StaticHandler.create())
-        /// API
+        //  API
         val api = Router.router(vertx)
-        //  market data init paint
+        ///  market data init paint
         api.get("/md/initpaint").handler{ctx -> this.apiInitPaint(ctx)}
         router.mountSubRouter("/api", api)
-
+        //  to web frontend
         val sockJSHandler = SockJSHandler.create(vertx);
         val bridgeOptions = BridgeOptions()
                 .addOutboundPermitted(PermittedOptions().setAddress(Address.marketdata_status.name))
