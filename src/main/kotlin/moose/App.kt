@@ -67,8 +67,7 @@ class MainVerticle : AbstractVerticle() {
 
     private fun setupConfig() : ConfigRetriever{
         var storeOptions = mutableListOf(
-            configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "config.yaml")}),
-            configStoreOptionsOf(type="env") // will override above
+            configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "config.yaml")})
         )
         val externalConf = "conf/config.yaml"
         if (File(externalConf).exists()){
