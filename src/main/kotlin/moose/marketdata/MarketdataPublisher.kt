@@ -55,7 +55,6 @@ class MarketDataPublisher : AbstractVerticle() {
         payload.put("sent_time", sentTime)
         snapshot[payload.getString("ticker")] = payload
         vertx.eventBus().publish(Address.marketdata_status.name, formatTimestamp(payload, ZoneId.systemDefault()))
-        /*
         logger.debug(
                 "Ticker {}, price={}, received at {}, published at {}",
                 payload.getString("ticker"),
@@ -63,7 +62,6 @@ class MarketDataPublisher : AbstractVerticle() {
                 Timestamp.formatEpoch(payload.getLong("received_time")),
                 Timestamp.formatEpoch(payload.getLong("sent_time"))
         )
-         */
     }
 
     internal fun initPaint(m : Message<JsonObject>, zone:ZoneId = ZoneId.systemDefault()) {
