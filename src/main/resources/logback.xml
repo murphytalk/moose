@@ -17,7 +17,7 @@
 
 <!-- tag::conf[] -->
 <configuration>
-
+  <jmxConfigurator />
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%d{yyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -27,7 +27,7 @@
   <logger name="com.mchange.v2" level="warn"/>
   <logger name="io.netty" level="warn"/>
   <logger name="io.vertx" level="info"/>
-  <logger name="moose" level="debug"/>
+  <logger name="moose" level="info"/>
 
   <root level="debug">
     <appender-ref ref="STDOUT"/>
