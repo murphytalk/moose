@@ -20,6 +20,15 @@
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <!--
+                to work with fastermxl 2.9x
+                https://github.com/FasterXML/jackson-module-kotlin
+            -->
+            <version>2.9.10</version>
+        </dependency>
 
         <!-- vert.x -->
         <dependency>
@@ -52,6 +61,12 @@
 
         <!-- test -->
         <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
+            <version>${vertx.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
@@ -68,6 +83,11 @@
             <artifactId>mockito-kotlin</artifactId>
             <version>2.2.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-client</artifactId>
+            <version>${vertx.version}</version>
         </dependency>
     </dependencies>
 
