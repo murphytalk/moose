@@ -1,11 +1,14 @@
 package moose
 
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
-import io.vertx.config.ConfigStoreOptions
-import io.vertx.core.*
+import io.vertx.core.AbstractVerticle
+import io.vertx.core.DeploymentOptions
+import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonObject
+import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.kotlin.config.configStoreOptionsOf
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
@@ -69,6 +72,7 @@ class MainVerticle : AbstractVerticle() {
 
     override fun start(promise: Promise<Void>) {
         val configFuture = ConfigRetriever.getConfigAsFuture(setupConfig())
+        DatabindCodec.mapper().registerModule(KotlinModule())
 
         // chaining future of config load => deploy MD publisher => deploy http => final handle
         // Note compose() is only get called when future is successful and the parameter is retrieved value

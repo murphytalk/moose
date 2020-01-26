@@ -12,6 +12,7 @@ import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.ext.unit.TestContext
 import io.vertx.ext.unit.junit.RunTestOnContext
 import io.vertx.ext.unit.junit.VertxUnitRunner
@@ -79,7 +80,7 @@ class TestMarketDataPublisher {
     fun prepare(ctx: TestContext) {
         // to encode Kotlin data class
         // https://github.com/vert-x3/vertx-lang-kotlin/issues/43
-        Json.mapper.registerModule(KotlinModule())
+        DatabindCodec.mapper().registerModule(KotlinModule())
 
         val vertx = rule.vertx()
         vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions())
