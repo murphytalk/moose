@@ -5,6 +5,7 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonObject
@@ -71,8 +72,11 @@ class MainVerticle : AbstractVerticle() {
     }
 
     override fun start(promise: Promise<Void>) {
-        val configFuture = ConfigRetriever.getConfigAsFuture(setupConfig())
         DatabindCodec.mapper().registerModule(KotlinModule())
+
+        val configFuture = Future.future<JsonObject>{
+            setupConfig().getConfig(it) //Promise extends Handler<AsyncResult<T>>
+        }
 
         // chaining future of config load => deploy MD publisher => deploy http => final handle
         // Note compose() is only get called when future is successful and the parameter is retrieved value
