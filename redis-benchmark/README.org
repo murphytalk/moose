@@ -1,0 +1,45 @@
+* What to measure
+
+The purpose is to get notification of changed key and value ASAP.
+
+The data structure we want to save in Redis is dictionary, so Redis's hash data structure appears to be the most suitable one.
+
+While Redis provides key space notification, the value of the changed key is not
+included in the notification, we will have to issue a HGETALL command to get the
+value.
+
+The other option is to issue a PUBLISH command too when saving the data to
+Redis. Since PUBLISH can only send STRING, instead of Redis's hash we have to
+encode our data to a JSON string.
+
+* Benchmark
+
+The size of the samples is 1,000,000 messages(2,000 unique keys). Redis background save is turned off.
+
+** Sender
+
+| Type        | Use PUBLISH? |  Time |
+|-------------+--------------+-------|
+| json string | N            |    43 |
+|             | Y            | 82.02 |
+|-------------+--------------+-------|
+| hash        | N            | 66.81 |
+|-------------+--------------+-------|
+
+** Receiver
+
+| Send Type   | Notification Type |  Time |
+|-------------+-------------------+-------|
+| json string | Key event + GET   |       |
+|             | SUBSCRIBE         | 82.02 |
+|-------------+-------------------+-------|
+| hash        | Key event + GET   | 66.88 |
+|-------------+-------------------+-------|
+
+Using wildcard to get all keys and then retrieve value for all 2000 keys took
+0.038 second, when using pipeline.
+
+* Conclusion
+
+PUBLISH following SET appears to be worse than GET when key space notification
+is received : do not need to send the data twice after all.
