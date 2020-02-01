@@ -56,7 +56,7 @@ class TestGenerator {
     @Test
     fun testMarketData() {
         val endpoint: EndPoint = mock()
-        Generator.start(100, 10, 1000, 10, 15, endpoint)
+        Generator.start(Generator.genTickers(100), 10, 1000, 10, 15, endpoint)
         Thread.sleep(50)
         Generator.stop()
         verify(endpoint, atLeastOnce()).onPriceUpdated(any(), any())

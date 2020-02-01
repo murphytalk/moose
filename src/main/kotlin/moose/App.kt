@@ -5,11 +5,13 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.kotlin.config.configStoreOptionsOf
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
+import moose.data.DataService
 import moose.marketdata.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -21,7 +23,8 @@ import java.time.format.DateTimeFormatter
 
 enum class Address {
     marketdata_publisher,
-    marketdata_status
+    marketdata_status,
+    data_service
 }
 
 enum class MarketDataAction {
@@ -91,17 +94,28 @@ class MainVerticle : AbstractVerticle() {
                     DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
                     http)
             }
+        }.compose{ _ ->
+            Future.future<String>{ data ->
+                vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data")),data)
+            }
         }.setHandler { ar ->
             if (ar.succeeded()) {
-                val genConfig = configFuture.result().getJsonObject("generator")
-                Generator.start(
-                        genConfig.getInteger("tickers"),
-                        genConfig.getInteger("min_price"),
-                        genConfig.getInteger("max_price"),
-                        genConfig.getInteger("min_interval"),
-                        genConfig.getInteger("max_interval"),
-                        MarketDataEndpoint())
-                promise.complete()
+                vertx.eventBus().request<JsonArray>(Address.data_service.name, null) {
+                    if(it.succeeded()) {
+                        val objs = it.result().body().list as List<JsonObject>
+                        val tickers = objs.map{ e -> e.mapTo(Ticker::class.java)}
+                        val genConfig = configFuture.result().getJsonObject("generator")
+                        Generator.start(
+                                tickers,
+                                genConfig.getInteger("min_price"),
+                                genConfig.getInteger("max_price"),
+                                genConfig.getInteger("min_interval"),
+                                genConfig.getInteger("max_interval"),
+                                MarketDataEndpoint())
+                        promise.complete()
+                   }
+                    else promise.fail(it.cause())
+                }
             } else {
                 promise.fail(ar.cause())
             }
