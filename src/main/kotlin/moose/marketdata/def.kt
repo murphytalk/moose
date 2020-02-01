@@ -19,7 +19,8 @@ class MarketDataCodec : MessageCodec<MarketData, MarketData>{
 
     override fun decodeFromWire(pos: Int, buffer: Buffer?): MarketData {
         val length = buffer!!.getInt(pos)
-        val obj = JsonObject(buffer.slice(pos, pos + 4 + length))
+        val pos2 = pos + 4
+        val obj = JsonObject(buffer.slice(pos2, pos2 + length))
         return obj.mapTo(MarketData::class.java)
     }
 

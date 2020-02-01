@@ -8,6 +8,7 @@ import com.nhaarman.mockitokotlin2.verify
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
+import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -23,6 +24,8 @@ import moose.Address
 import moose.MarketDataAction
 import moose.Timestamp
 import moose.http.HttpServerVerticle
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -177,5 +180,21 @@ class TestMarketDataPublisher {
             }
             publishTick(vertx)
         }
+    }
+}
+
+class TestCustCodec{
+    @Before
+    fun prepare(){
+        DatabindCodec.mapper().registerModule(KotlinModule())
+    }
+
+    @Test
+    fun testMarketDataCodec(){
+        val md = MarketData(Ticker("test"), MarketDataPayload(100, 123),456)
+        val codec = MarketDataCodec()
+        val buffer = Buffer.buffer()
+        codec.encodeToWire(buffer, md)
+        assertThat(codec.decodeFromWire(0, buffer), `is`(md))
     }
 }
