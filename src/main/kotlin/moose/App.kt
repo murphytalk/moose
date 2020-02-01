@@ -82,31 +82,29 @@ class MainVerticle : AbstractVerticle() {
         // chaining future:
         // 
         //     config load =>
-        //     deploy MD publisher ==>
-        //     http  =>
-        //     data service =>
+        //     in parallel { deploy MD publisher / http / data service } =>
         //     request ticker list from data service =>
         //     final handle to start the randome market data generator
         //
         // Note compose() is only get called when future is successful and the parameter is retrieved value
         configFuture.compose { config ->
             logger.info("Config is loaded {}", config.encodePrettily())
-            Future.future<String>{ publisher ->
-                vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisher)
-            }
-        }.compose { _ ->  // deploy id, not used
-            Future.future<String>{ http ->
-                val httpConfig = configFuture.result().getJsonObject("http")
-                vertx.deployVerticle(
-                    "moose.http.HttpServerVerticle",
-                    DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
-                    http)
-            }
-        }.compose{ _ ->
-            Future.future<String>{ data ->
-                vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data")),data)
-            }
-        }.compose{ _ ->
+            CompositeFuture.all(listOf(
+                Future.future<String>{ publisher ->
+                    vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisher)
+                },
+                Future.future<String>{ http ->
+                    val httpConfig = configFuture.result().getJsonObject("http")
+                    vertx.deployVerticle(
+                            "moose.http.HttpServerVerticle",
+                            DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
+                            http)
+                },
+                Future.future<String>{ data ->
+                    vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data")),data)
+                }
+            ))
+       }.compose{ _ ->
            Future.future<List<Ticker>>{ tickersPromise ->
                vertx.eventBus().request<JsonArray>(Address.data_service.name, null) {
                    val objs = it.result().body().list as List<JsonObject>
@@ -114,22 +112,22 @@ class MainVerticle : AbstractVerticle() {
                    tickersPromise.complete(tickers)
                }
            }
-        }.setHandler { ar ->
-            if(ar.succeeded()) {
-                val tickers = ar.result()
-                val genConfig = configFuture.result().getJsonObject("generator")
-                Generator.start(
-                        tickers,
-                        genConfig.getInteger("min_price"),
-                        genConfig.getInteger("max_price"),
-                        genConfig.getInteger("min_interval"),
-                        genConfig.getInteger("max_interval"),
-                        MarketDataEndpoint())
-                promise.complete()
-            } else {
-                promise.fail(ar.cause())
-            }
-        }
+       }.setHandler { ar ->
+           if(ar.succeeded()) {
+               val tickers = ar.result()
+               val genConfig = configFuture.result().getJsonObject("generator")
+               Generator.start(
+                       tickers,
+                       genConfig.getInteger("min_price"),
+                       genConfig.getInteger("max_price"),
+                       genConfig.getInteger("min_interval"),
+                       genConfig.getInteger("max_interval"),
+                       MarketDataEndpoint())
+               promise.complete()
+           } else {
+               promise.fail(ar.cause())
+           }
+       }
     }
 
     override fun stop() {
