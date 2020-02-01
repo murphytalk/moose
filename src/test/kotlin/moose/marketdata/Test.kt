@@ -20,6 +20,8 @@ import io.vertx.kotlin.core.json.obj
 import moose.Address
 import moose.MarketDataAction
 import moose.Timestamp
+import moose.data.Cache
+import moose.data.Redis
 import moose.http.HttpServerVerticle
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -28,6 +30,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.internal.util.reflection.FieldSetter
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -102,12 +106,21 @@ class TestMarketDataPublisher {
         val async = ctx.async()
         val vertx = rule.vertx()
 
-        vertx.deployVerticle(object : MarketDataPublisher(){
-            override fun publishTick(md: MarketData){
-                assertThat(MarketData(Ticker(ticker), MarketDataPayload(price, receivedTime)), `is`(md))
-                async.complete()
-            }
-        }, DeploymentOptions()){
+        val redis: Cache = mock();
+        // thenAnswer() is delayed, only called when the mocked function is getting called
+        whenever(redis.publish(any())).thenAnswer {
+            verify(redis).publish(check{
+                val md = MarketData(Ticker(ticker), MarketDataPayload(price, receivedTime))
+                assertThat(it.ticker, `is`(md.ticker))
+                assertThat(it.payload, `is`(md.payload))
+                //ignore publishTime as they are different
+            })
+            async.complete()
+        }
+
+        val marketDataPublisher = MarketDataPublisher()
+        FieldSetter.setField(marketDataPublisher, MarketDataPublisher::class.java.getDeclaredField("redis"), redis)
+        vertx.deployVerticle(marketDataPublisher, DeploymentOptions()){
             publishTick(vertx)
         }
     }

@@ -2,7 +2,6 @@ package moose.data
 
 import io.vertx.core.*
 import io.vertx.core.net.SocketAddress
-import io.vertx.kotlin.redis.client.hmsetAwait
 import io.vertx.redis.client.Redis
 import io.vertx.redis.client.RedisAPI
 import io.vertx.redis.client.RedisOptions
@@ -14,7 +13,12 @@ import kotlin.math.pow
 
 const val MAX_RECONNECT_RETRIES = 10
 
-class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger: Logger? = null){
+interface Cache{
+    fun publish(marketData: MarketData)
+    fun connect(promise: Promise<Void>)
+}
+
+class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger: Logger? = null): Cache{
     private var redis: Redis? = null
     var api: RedisAPI? = null
 
@@ -30,7 +34,7 @@ class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger
         }
     }
 
-    fun connect(promise: Promise<Void>) {
+    override fun connect(promise: Promise<Void>) {
         if ( port == null || hostname == null){
             promise.complete()
             return
@@ -45,7 +49,7 @@ class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger
         }
     }
 
-    fun publish(marketData: MarketData){
+    override fun publish(marketData: MarketData){
         api?.hmset(listOf(
                 marketData.ticker.name,
                 "price", marketData.payload.price.toString(),

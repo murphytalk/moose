@@ -9,19 +9,20 @@ import moose.Address
 import moose.ErrorCodes
 import moose.MarketDataAction
 import moose.Timestamp
+import moose.data.Cache
 import moose.data.DataService
 import moose.data.Redis
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 
-open class MarketDataPublisher : AbstractVerticle() {
+class MarketDataPublisher : AbstractVerticle() {
     private companion object {
         val logger: Logger = LoggerFactory.getLogger(MarketDataPublisher::class.java)
     }
 
     private val snapshot = mutableMapOf<String, MarketData>()
-    private var redis: Redis? = null
+    private var redis: Cache? = null
 
     // use data class ?
     // https://github.com/vert-x3/vertx-lang-kotlin/issues/43
@@ -48,8 +49,11 @@ open class MarketDataPublisher : AbstractVerticle() {
                 }
             }
         }
-        redis = Redis(vertx, config().getString("hostname"), config().getInteger("port"), logger)
-        redis?.connect(promise)
+        if(redis == null) {
+            redis = Redis(vertx, config().getString("hostname"), config().getInteger("port"), logger)
+            redis?.connect(promise)
+        }
+        else promise.complete()
     }
 
     private fun marketDataToJson(marketData:MarketData, zone: ZoneId): JsonObject{
@@ -62,7 +66,7 @@ open class MarketDataPublisher : AbstractVerticle() {
         return md
     }
 
-    protected open fun publishTick(marketData: MarketData){
+    private fun publishTick(marketData: MarketData){
         marketData.publishTime = System.currentTimeMillis()
         redis?.publish(marketData)
         //vertx.eventBus().publish(Address.marketdata_status.name, marketDataToJson(marketData, ZoneId.systemDefault()))
