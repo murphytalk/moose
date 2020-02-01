@@ -87,11 +87,13 @@ class MainVerticle : AbstractVerticle() {
         //     final handle to start the randome market data generator
         //
         // Note compose() is only get called when future is successful and the parameter is retrieved value
+
         configFuture.compose { config ->
             logger.info("Config is loaded {}", config.encodePrettily())
+            val redisCfg = config.getJsonObject("redis")
             CompositeFuture.all(listOf(
                 Future.future<String>{ publisher ->
-                    vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisher)
+                    vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(redisCfg), publisher)
                 },
                 Future.future<String>{ http ->
                     val httpConfig = configFuture.result().getJsonObject("http")
@@ -101,7 +103,7 @@ class MainVerticle : AbstractVerticle() {
                             http)
                 },
                 Future.future<String>{ data ->
-                    vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data")),data)
+                    vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data").put("redis",redisCfg)),data)
                 }
             ))
        }.compose{ _ ->

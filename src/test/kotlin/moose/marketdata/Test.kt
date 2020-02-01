@@ -1,10 +1,7 @@
 package moose.marketdata
 
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.atLeastOnce
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.*
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -83,9 +80,6 @@ class TestMarketDataPublisher {
         // to encode Kotlin data class
         // https://github.com/vert-x3/vertx-lang-kotlin/issues/43
         DatabindCodec.mapper().registerModule(KotlinModule())
-
-        val vertx = rule.vertx()
-        vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions())
     }
 
     @After
@@ -104,6 +98,21 @@ class TestMarketDataPublisher {
     }
 
     @Test
+    fun testMarketDataPublish(ctx: TestContext){
+        val async = ctx.async()
+        val vertx = rule.vertx()
+
+        vertx.deployVerticle(object : MarketDataPublisher(){
+            override fun publishTick(md: MarketData){
+                assertThat(MarketData(Ticker(ticker), MarketDataPayload(price, receivedTime)), `is`(md))
+                async.complete()
+            }
+        }, DeploymentOptions()){
+            publishTick(vertx)
+        }
+    }
+
+    //@Test
     fun testMarketStatusUpdate(ctx: TestContext) {
         val async = ctx.async()
         val vertx = rule.vertx()
@@ -135,9 +144,8 @@ class TestMarketDataPublisher {
         }
         vertx.deployVerticle(V(), DeploymentOptions()){ar ->
             assertTrue { ar.succeeded() }
+            publishTick(vertx)
         }
-
-        publishTick(vertx)
 
         async.awaitSuccess(5000)
     }
@@ -146,6 +154,8 @@ class TestMarketDataPublisher {
     fun testInitPaint(ctx: TestContext) {
         val async = ctx.async()
         val vertx = rule.vertx()
+
+        vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions())
 
         val httpConfig = json{
             obj(
