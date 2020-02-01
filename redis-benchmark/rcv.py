@@ -41,7 +41,7 @@ class myThread (threading.Thread):
                 k = m['channel'].decode('utf-8').split(':')[1]
                 #print("key is {}".format(k))
                 m = r.hgetall(k)
-                #print(m)
+                print(m)
             if start is None:
                 start = timer()
 

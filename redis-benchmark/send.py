@@ -44,7 +44,7 @@ def save_as_hash(tick, publish):
 
 if __name__ == "__main__":
     from docopt import docopt
-    from timeit import default_timer as timeoor
+    from timeit import default_timer as timer
     args = docopt(__doc__)
 
     if args['-p'] and not args['-j']:

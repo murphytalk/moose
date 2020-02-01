@@ -36,7 +36,7 @@ The size of the samples is 1,000,000 messages(2,000 unique keys). Redis backgrou
 | hash        | Key event + GET   | 66.88 |
 |-------------+-------------------+-------|
 
-Using wildcard to get all keys and then retrieve value for all 2000 keys took
+Using wildcard to get all keys and then retrieve value for all 2,000 keys took
 0.038 second, when using pipeline.
 
 * Conclusion

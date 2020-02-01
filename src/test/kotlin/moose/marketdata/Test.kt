@@ -9,7 +9,6 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
@@ -96,7 +95,8 @@ class TestMarketDataPublisher {
         val msg = MarketData(Ticker(ticker), MarketDataPayload(price, receivedTime))
         vertx.eventBus().send(
                 Address.marketdata_publisher.name,
-                JsonObject.mapFrom(msg),
+                //JsonObject.mapFrom(msg),
+                msg,
                 DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.tick.name))
     }
 

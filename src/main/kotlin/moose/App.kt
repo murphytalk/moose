@@ -3,10 +3,7 @@ package moose
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Future
-import io.vertx.core.Promise
+import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
@@ -43,6 +40,7 @@ object Timestamp {
     fun formatEpoch(epochMillis: Long, zone:ZoneId = ZoneId.systemDefault()): String = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), zone).format(formatter)
 }
 
+
 class MainVerticle : AbstractVerticle() {
     private companion object {
         val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
@@ -53,7 +51,7 @@ class MainVerticle : AbstractVerticle() {
             val msg = MarketData(ticker, MarketDataPayload(price, System.currentTimeMillis()))
             vertx.eventBus().send(
                 Address.marketdata_publisher.name,
-                JsonObject.mapFrom(msg), // to encode data class directly need to write custom message codec
+                msg,
                 DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.tick.name)
             )
         }
@@ -78,22 +76,21 @@ class MainVerticle : AbstractVerticle() {
             setupConfig().getConfig(it) //Promise extends Handler<AsyncResult<T>>
         }
 
-        // chaining future of config load => deploy MD publisher => deploy http => final handle
+        // chaining future of config load => deploy MD publisher and http in parallel => final handle
         // Note compose() is only get called when future is successful and the parameter is retrieved value
-
         configFuture.compose { config ->
             logger.info("Config is loaded {}", config.encodePrettily())
-            val publisherDeployment = Promise.promise<String>()
-            vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisherDeployment)
-            publisherDeployment.future()
-        }.compose{ _ ->  // deploy id, not used
-            val httpDeployment = Promise.promise<String>()
-            val httpConfig = configFuture.result().getJsonObject("http")
-            vertx.deployVerticle(
+            Future.future<String>{ publisher ->
+                vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisher)
+            }
+        }.compose { _ ->  // deploy id, not used
+            Future.future<String>{ http ->
+                val httpConfig = configFuture.result().getJsonObject("http")
+                vertx.deployVerticle(
                     "moose.http.HttpServerVerticle",
                     DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
-                    httpDeployment)
-            httpDeployment.future()
+                    http)
+            }
         }.setHandler { ar ->
             if (ar.succeeded()) {
                 val genConfig = configFuture.result().getJsonObject("generator")

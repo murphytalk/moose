@@ -22,16 +22,17 @@ class MarketDataPublisher : AbstractVerticle() {
     // use data class ?
     // https://github.com/vert-x3/vertx-lang-kotlin/issues/43
     override fun start() {
-        vertx.eventBus().consumer<JsonObject>(Address.marketdata_publisher.name) { m ->
+        vertx.eventBus().registerDefaultCodec(MarketData::class.java, MarketDataCodec())
+        .consumer<MarketData>(Address.marketdata_publisher.name) { m ->
             if ((MarketDataAction.action.name) !in m.headers()) {
                 logger.error("No action header specified for message with headers {} and body {}",
-                        m.headers(), m.body().encodePrettily())
+                        m.headers(), m.body())
                 m.fail(ErrorCodes.NO_ACTION_SPECIFIED.ordinal, "No action header specified")
                 return@consumer
             }
             when (val action = m.headers()[MarketDataAction.action.name]) {
                 MarketDataAction.tick.name -> {
-                    val md = m.body().mapTo(MarketData::class.java)
+                    val md = m.body()
                     snapshot[md.ticker.name] = md
                     publishTick(md)
                 }
@@ -61,7 +62,7 @@ class MarketDataPublisher : AbstractVerticle() {
         logger.debug("published market data {}",marketData)
     }
 
-    private fun initPaint(m : Message<JsonObject>, zone:ZoneId = ZoneId.systemDefault()) {
+    private fun initPaint(m : Message<MarketData>, zone:ZoneId = ZoneId.systemDefault()) {
         m.reply(JsonArray(snapshot.map {marketDataToJson(it.value, zone)}))
     }
 }
