@@ -1,6 +1,12 @@
 # for random market data generator
-generator:
+data:
   tickers: 50
+
+redis:
+  hostname: localhost
+  port: 6379
+
+generator:
   min_price: 100
   max_price: 1000
   min_interval: 10

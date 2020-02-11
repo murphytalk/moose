@@ -38,8 +38,7 @@ object Generator {
         return tickers.map { it }
     }
 
-    fun start(numOfTickers: Int, minPrice: Int, maxPrice:Int, intervalMinMs:Int, intervalMaxMs: Int, endPoint: EndPoint){
-        val tickers = genTickers(numOfTickers)
+    fun start(tickers: List<Ticker>, minPrice: Int, maxPrice:Int, intervalMinMs:Int, intervalMaxMs: Int, endPoint: EndPoint){
         th = thread(start = true, name = "market-data-gen-thread") {
             val intervalRange = intervalMaxMs - intervalMinMs + 1
             do{

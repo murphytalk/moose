@@ -4,7 +4,6 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
 import io.vertx.ext.bridge.PermittedOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -15,7 +14,6 @@ import io.vertx.ext.web.templ.pebble.PebbleTemplateEngine
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
 import moose.Address
-import moose.MainVerticle
 import moose.MarketDataAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

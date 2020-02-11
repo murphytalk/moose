@@ -1,18 +1,18 @@
 package moose
 
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
-import io.vertx.config.ConfigStoreOptions
 import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.kotlin.config.configStoreOptionsOf
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
-import moose.marketdata.EndPoint
-import moose.marketdata.Generator
-import moose.marketdata.MarketDataPublisher
-import moose.marketdata.Ticker
+import moose.data.DataService
+import moose.marketdata.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -23,7 +23,8 @@ import java.time.format.DateTimeFormatter
 
 enum class Address {
     marketdata_publisher,
-    marketdata_status
+    marketdata_status,
+    data_service
 }
 
 enum class MarketDataAction {
@@ -42,21 +43,15 @@ object Timestamp {
     fun formatEpoch(epochMillis: Long, zone:ZoneId = ZoneId.systemDefault()): String = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), zone).format(formatter)
 }
 
+
 class MainVerticle : AbstractVerticle() {
     private companion object {
         val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
-        var config : JsonObject? = null
     }
 
     private inner class MarketDataEndpoint : EndPoint {
         override fun onPriceUpdated(ticker: Ticker, price: Int) {
-            val msg = json {
-                obj(
-                        "ticker" to ticker.name,
-                        "price" to price,
-                        "received_time" to System.currentTimeMillis()
-                )
-            }
+            val msg = MarketData(ticker, MarketDataPayload(price, System.currentTimeMillis()))
             vertx.eventBus().send(
                 Address.marketdata_publisher.name,
                 msg,
@@ -67,8 +62,7 @@ class MainVerticle : AbstractVerticle() {
 
     private fun setupConfig() : ConfigRetriever{
         var storeOptions = mutableListOf(
-            configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "config.yaml")}),
-            configStoreOptionsOf(type="env") // will override above
+            configStoreOptionsOf(type="file", format = "yaml", config=json{obj("path" to "config.yaml")})
         )
         val externalConf = "conf/config.yaml"
         if (File(externalConf).exists()){
@@ -79,42 +73,71 @@ class MainVerticle : AbstractVerticle() {
     }
 
     override fun start(promise: Promise<Void>) {
-        val configFuture = ConfigRetriever.getConfigAsFuture(setupConfig())
+        DatabindCodec.mapper().registerModule(KotlinModule())
 
-        // chaining future of config load => deploy MD publisher => deploy http => final handle
+        val configFuture = Future.future<JsonObject>{
+            setupConfig().getConfig(it) //Promise extends Handler<AsyncResult<T>>
+        }
+
+        // chaining future:
+        // 
+        //     config load =>
+        //     in parallel { deploy MD publisher / http / data service } =>
+        //     request ticker list from data service =>
+        //     final handle to start the randome market data generator
+        //
         // Note compose() is only get called when future is successful and the parameter is retrieved value
 
         configFuture.compose { config ->
             logger.info("Config is loaded {}", config.encodePrettily())
-            MainVerticle.config = config
-            val publisherDeployment = Promise.promise<String>()
-            vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(config), publisherDeployment)
-            publisherDeployment.future()
-        }.compose{ _ ->  // deploy id, not used
-            val httpDeployment = Promise.promise<String>()
-            val httpConfig = MainVerticle.config!!.getJsonObject("http")
-            vertx.deployVerticle(
-                    "moose.http.HttpServerVerticle",
-                    DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
-                    httpDeployment)
-            httpDeployment.future()
-        }.setHandler { ar ->
-            if (ar.succeeded()) {
-                val genConfig = MainVerticle.config!!.getJsonObject("generator")
-                Generator.start(
-                        genConfig.getInteger("tickers"),
-                        genConfig.getInteger("min_price"),
-                        genConfig.getInteger("max_price"),
-                        genConfig.getInteger("min_interval"),
-                        genConfig.getInteger("max_interval"),
-                        MarketDataEndpoint())
-                promise.complete()
-                //all verticles have been deployed, no longer need to to hold it
-                MainVerticle.config = null
-            } else {
-                promise.fail(ar.cause())
-            }
-        }
+            val redisCfg = config.getJsonObject("redis")
+            CompositeFuture.all(listOf(
+                Future.future<String>{ publisher ->
+                    vertx.deployVerticle(MarketDataPublisher(), DeploymentOptions().setConfig(redisCfg), publisher)
+                },
+                Future.future<String>{ http ->
+                    val httpConfig = configFuture.result().getJsonObject("http")
+                    vertx.deployVerticle(
+                            "moose.http.HttpServerVerticle",
+                            DeploymentOptions().setInstances(httpConfig.getInteger("number")).setConfig(httpConfig),
+                            http)
+                },
+                Future.future<String>{ data ->
+                    vertx.deployVerticle(DataService(), DeploymentOptions().setConfig(configFuture.result().getJsonObject("data").put("redis",redisCfg)),data)
+                }
+            ))
+       }.compose{ _ ->
+           Future.future<List<Ticker>>{ tickersPromise ->
+               vertx.eventBus().request<JsonArray>(Address.data_service.name, null) {
+                   val objs = it.result().body().list as List<JsonObject>
+                   val tickers = objs.map{ e -> e.mapTo(Ticker::class.java)}
+                   tickersPromise.complete(tickers)
+               }
+           }
+       }.setHandler { ar ->
+           if(ar.succeeded()) {
+               val tickers = ar.result()
+               val genConfig = configFuture.result().getJsonObject("generator")
+               Generator.start(
+                       tickers,
+                       genConfig.getInteger("min_price"),
+                       genConfig.getInteger("max_price"),
+                       genConfig.getInteger("min_interval"),
+                       genConfig.getInteger("max_interval"),
+                       MarketDataEndpoint())
+
+               Runtime.getRuntime().addShutdownHook(object:Thread(){
+                   override fun run(){
+                       logger.info("Undeploying verticles")
+                       vertx.deploymentIDs().forEach { vertx.undeploy(it) }
+                   }
+               })
+
+               promise.complete()
+           } else {
+               promise.fail(ar.cause())
+           }
+       }
     }
 
     override fun stop() {
