@@ -21,7 +21,6 @@ import moose.Address
 import moose.MarketDataAction
 import moose.Timestamp
 import moose.data.Cache
-import moose.data.Redis
 import moose.http.HttpServerVerticle
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -30,7 +29,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
 import org.mockito.internal.util.reflection.FieldSetter
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

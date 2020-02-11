@@ -125,6 +125,14 @@ class MainVerticle : AbstractVerticle() {
                        genConfig.getInteger("min_interval"),
                        genConfig.getInteger("max_interval"),
                        MarketDataEndpoint())
+
+               Runtime.getRuntime().addShutdownHook(object:Thread(){
+                   override fun run(){
+                       logger.info("Undeploying verticles")
+                       vertx.deploymentIDs().forEach { vertx.undeploy(it) }
+                   }
+               })
+
                promise.complete()
            } else {
                promise.fail(ar.cause())

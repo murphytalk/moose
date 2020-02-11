@@ -16,6 +16,7 @@ const val MAX_RECONNECT_RETRIES = 10
 interface Cache{
     fun publish(marketData: MarketData)
     fun connect(promise: Promise<Void>)
+    fun disconnect()
 }
 
 class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger: Logger? = null): Cache{
@@ -47,6 +48,10 @@ class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger
                 promise.fail(it.cause())
             }
         }
+    }
+
+    override fun disconnect(){
+        redis?.close()
     }
 
     override fun publish(marketData: MarketData){

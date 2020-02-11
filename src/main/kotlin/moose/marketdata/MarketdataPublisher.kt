@@ -75,5 +75,9 @@ class MarketDataPublisher : AbstractVerticle() {
     private fun initPaint(m : Message<MarketData>, zone:ZoneId = ZoneId.systemDefault()) {
         m.reply(JsonArray(snapshot.map {marketDataToJson(it.value, zone)}))
     }
+
+    override fun stop() {
+        redis?.disconnect()
+    }
 }
 
