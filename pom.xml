@@ -9,7 +9,7 @@
     <properties>
         <kotlin.version>1.3.61</kotlin.version>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
-        <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
+        <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
         <vertx.version>3.8.4</vertx.version>
         <main.verticle>moose.MainVerticle</main.verticle>
     </properties>
