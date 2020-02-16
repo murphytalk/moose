@@ -19,7 +19,7 @@ interface Cache{
     fun disconnect()
 }
 
-class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, val logger: Logger? = null): Cache{
+class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, private val logger: Logger? = null): Cache{
     private var redis: Redis? = null
     var api: RedisAPI? = null
 

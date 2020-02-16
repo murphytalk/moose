@@ -3,12 +3,15 @@ package moose.data
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.redis.client.Response
 import moose.Address
 import moose.marketdata.Generator
 import moose.marketdata.Ticker
+import moose.marketdata.TickerListCodec
+import moose.marketdata.tickerListCodec
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -25,13 +28,9 @@ class DataService : AbstractVerticle() {
         // in the real world the list could be loaded from an external storage e.g. DB
         tickers = Generator.genTickers(config().getInteger("tickers"))
 
-        vertx.eventBus().consumer<String>(Address.data_service.name){ m ->
-            // just to avoid to write a List codec ...
-            val payload = JsonArray()
-            tickers?.asSequence()?.fold(payload){ accu, ticker ->
-               accu.add(JsonObject.mapFrom(ticker))
-            }
-            m.reply(payload)
+        vertx.eventBus().registerCodec(TickerListCodec())
+                .consumer<String>(Address.data_service.name){ m ->
+            m.reply(tickers, DeliveryOptions().setCodecName(tickerListCodec))
         }
 
         val redisConfig = config().getJsonObject("redis")

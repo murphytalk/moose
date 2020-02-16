@@ -218,4 +218,13 @@ class TestCustCodec{
         codec.encodeToWire(buffer, md)
         assertThat(codec.decodeFromWire(0, buffer), `is`(md))
     }
+
+    @Test
+    fun testTickerListCodec(){
+        val tickers = listOf(Ticker("abc"), Ticker("xyz"))
+        val codec = TickerListCodec()
+        val buffer = Buffer.buffer()
+        codec.encodeToWire(buffer, tickers)
+        assertThat(codec.decodeFromWire(0,buffer),`is`(tickers))
+    }
 }

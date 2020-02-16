@@ -108,9 +108,8 @@ class MainVerticle : AbstractVerticle() {
             ))
        }.compose{ _ ->
            Future.future<List<Ticker>>{ tickersPromise ->
-               vertx.eventBus().request<JsonArray>(Address.data_service.name, null) {
-                   val objs = it.result().body().list as List<JsonObject>
-                   val tickers = objs.map{ e -> e.mapTo(Ticker::class.java)}
+               vertx.eventBus().request<List<Ticker>>(Address.data_service.name, null) {
+                   val tickers = it.result().body()
                    tickersPromise.complete(tickers)
                }
            }
