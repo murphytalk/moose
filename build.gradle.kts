@@ -9,6 +9,7 @@ plugins {
     //https://github.com/jponge/vertx-gradle-plugin
     id("io.vertx.vertx-plugin") version "1.0.1"
 
+    id("com.adarshr.test-logger") version "2.0.0"
     // Apply the application plugin to add support for building a CLI application.
     application
 }
@@ -51,11 +52,14 @@ vertx { // (1)
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "12"
     }
 }
 
 tasks{
+    test {
+        testLogging.showExceptions = true
+    }
     shadowJar{
         archiveVersion.set(projectVersion)
     }
