@@ -14,7 +14,7 @@ import kotlin.math.pow
 const val MAX_RECONNECT_RETRIES = 10
 
 // see the Java class that extends this for the reason
-open class RedisKotlin (private val vertx: Vertx, private val hostname: String?, private val port :Int?, protected val logger: Logger? = null){
+abstract class AbstractRedis (private val vertx: Vertx, private val hostname: String?, private val port :Int?, protected val logger: Logger? = null){
     private var redis: Redis? = null
     var api: RedisAPI? = null
 

@@ -14,7 +14,7 @@ import java.util.List;
    As of now, the Kotlin compiler has yet to take the advantage of JVM instruction invokedynamic to call lambdas,
    see https://youtrack.jetbrains.com/issue/KT-26060
 */
-public class Redis extends RedisKotlin{
+public class Redis extends AbstractRedis {
     public Redis(@NotNull Vertx vertx, @Nullable String hostname, @Nullable Integer port, @Nullable Logger logger) {
         super(vertx, hostname, port, logger);
     }
