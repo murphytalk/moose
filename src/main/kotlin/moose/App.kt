@@ -5,7 +5,6 @@ import io.vertx.config.ConfigRetriever
 import io.vertx.config.ConfigRetrieverOptions
 import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.jackson.DatabindCodec
 import io.vertx.kotlin.config.configStoreOptionsOf
@@ -21,17 +20,13 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-enum class Address {
-    marketdata_publisher,
-    marketdata_status,
-    data_service
-}
+const val AddressMarketDataPublisher = "mktdt_pub"
+const val AddressMarketDataStatus = "mktdt_sts"
+const val AddressDataService = "dt_srv"
 
-enum class MarketDataAction {
-    action,
-    tick,
-    init_paint
-}
+const val MarketDataActionAction = "act"
+const val MarketDataActionTick = "tk"
+const val MarketDataActionInitPaint = "init_pt"
 
 enum class ErrorCodes {
     NO_ACTION_SPECIFIED,
@@ -53,9 +48,9 @@ class MainVerticle : AbstractVerticle() {
         override fun onPriceUpdated(ticker: Ticker, price: Int) {
             val msg = MarketData(ticker, MarketDataPayload(price, System.currentTimeMillis()))
             vertx.eventBus().send(
-                Address.marketdata_publisher.name,
+                AddressMarketDataPublisher,
                 msg,
-                DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.tick.name)
+                DeliveryOptions().addHeader(MarketDataActionAction, MarketDataActionTick)
             )
         }
     }
@@ -108,7 +103,7 @@ class MainVerticle : AbstractVerticle() {
             ))
        }.compose{ _ ->
            Future.future<List<Ticker>>{ tickersPromise ->
-               vertx.eventBus().request<List<Ticker>>(Address.data_service.name, null) {
+               vertx.eventBus().request<List<Ticker>>(AddressDataService, null) {
                    val tickers = it.result().body()
                    tickersPromise.complete(tickers)
                }

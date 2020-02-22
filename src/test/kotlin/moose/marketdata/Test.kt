@@ -17,9 +17,7 @@ import io.vertx.ext.web.client.WebClient
 import io.vertx.kotlin.core.json.array
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
-import moose.Address
-import moose.MarketDataAction
-import moose.Timestamp
+import moose.*
 import moose.data.Redis
 import moose.http.HttpServerVerticle
 import org.hamcrest.CoreMatchers.`is`
@@ -93,10 +91,10 @@ class TestMarketDataPublisher {
     private fun publishTick(vertx: Vertx){
         val msg = MarketData(Ticker(ticker), MarketDataPayload(price, receivedTime))
         vertx.eventBus().send(
-                Address.marketdata_publisher.name,
+                AddressMarketDataPublisher,
                 //JsonObject.mapFrom(msg),
                 msg,
-                DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.tick.name))
+                DeliveryOptions().addHeader(MarketDataActionAction, MarketDataActionTick))
     }
 
     @Test
@@ -132,7 +130,7 @@ class TestMarketDataPublisher {
         // Simulate the browser side : subscribe to market data status
         class V : AbstractVerticle() {
             override fun start() {
-                vertx.eventBus().consumer<JsonObject>(Address.marketdata_status.name) {
+                vertx.eventBus().consumer<JsonObject>(AddressMarketDataStatus) {
                     val returned = it.body()
 
                     val json = json {

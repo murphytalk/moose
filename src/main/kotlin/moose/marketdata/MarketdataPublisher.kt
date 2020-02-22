@@ -5,10 +5,7 @@ import io.vertx.core.Promise
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import moose.Address
-import moose.ErrorCodes
-import moose.MarketDataAction
-import moose.Timestamp
+import moose.*
 import moose.data.Redis
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,20 +23,20 @@ class MarketDataPublisher : AbstractVerticle() {
     // https://github.com/vert-x3/vertx-lang-kotlin/issues/43
     override fun start(promise: Promise<Void>) {
         vertx.eventBus().registerDefaultCodec(MarketData::class.java, MarketDataCodec())
-        .consumer<MarketData>(Address.marketdata_publisher.name) { m ->
-            if ((MarketDataAction.action.name) !in m.headers()) {
+        .consumer<MarketData>(AddressMarketDataPublisher) { m ->
+            if ((MarketDataActionAction) !in m.headers()) {
                 logger.error("No action header specified for message with headers {} and body {}",
                         m.headers(), m.body())
                 m.fail(ErrorCodes.NO_ACTION_SPECIFIED.ordinal, "No action header specified")
                 return@consumer
             }
-            when (val action = m.headers()[MarketDataAction.action.name]) {
-                MarketDataAction.tick.name -> {
+            when (val action = m.headers()[MarketDataActionAction]) {
+                MarketDataActionTick -> {
                     val md = m.body()
                     snapshot[md.ticker.name] = md
                     publishTick(md)
                 }
-                MarketDataAction.init_paint.name ->
+                MarketDataActionInitPaint ->
                     initPaint(m)
                 else -> {
                     m.fail(ErrorCodes.BAD_ACTION.ordinal, "Bad action: $action")
@@ -67,7 +64,7 @@ class MarketDataPublisher : AbstractVerticle() {
     private fun publishTick(marketData: MarketData){
         marketData.publishTime = System.currentTimeMillis()
         redis?.publish(marketData)
-        //vertx.eventBus().publish(Address.marketdata_status.name, marketDataToJson(marketData, ZoneId.systemDefault()))
+        //vertx.eventBus().publish(Address_marketdata_status, marketDataToJson(marketData, ZoneId.systemDefault()))
     }
 
     private fun initPaint(m : Message<MarketData>, zone:ZoneId = ZoneId.systemDefault()) {

@@ -13,8 +13,10 @@ import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.ext.web.templ.pebble.PebbleTemplateEngine
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
-import moose.Address
-import moose.MarketDataAction
+import moose.AddressMarketDataPublisher
+import moose.AddressMarketDataStatus
+import moose.MarketDataActionAction
+import moose.MarketDataActionInitPaint
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -45,7 +47,7 @@ class HttpServerVerticle() : AbstractVerticle() {
         //  to web frontend
         val sockJSHandler = SockJSHandler.create(vertx);
         val bridgeOptions = BridgeOptions()
-                .addOutboundPermitted(PermittedOptions().setAddress(Address.marketdata_status.name))
+                .addOutboundPermitted(PermittedOptions().setAddress(AddressMarketDataStatus))
         sockJSHandler.bridge(bridgeOptions)
         router.route("/eventbus/*").handler(sockJSHandler)
 
@@ -76,8 +78,8 @@ class HttpServerVerticle() : AbstractVerticle() {
     }
 
     private fun apiInitPaint(routingContext: RoutingContext){
-        val options = DeliveryOptions().addHeader(MarketDataAction.action.name, MarketDataAction.init_paint.name)
-        vertx.eventBus().request<JsonArray>(Address.marketdata_publisher.name, null, options) { reply ->
+        val options = DeliveryOptions().addHeader(MarketDataActionAction, MarketDataActionInitPaint)
+        vertx.eventBus().request<JsonArray>(AddressMarketDataPublisher, null, options) { reply ->
             val restResp = routingContext.response()
             restResp.putHeader("Content-Type", "application/json")
             if (reply.succeeded()){

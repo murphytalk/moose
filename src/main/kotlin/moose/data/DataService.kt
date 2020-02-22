@@ -5,7 +5,7 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.redis.client.Response
-import moose.Address
+import moose.AddressDataService
 import moose.marketdata.Generator
 import moose.marketdata.Ticker
 import moose.marketdata.TickerListCodec
@@ -27,7 +27,7 @@ class DataService : AbstractVerticle() {
         tickers = Generator.genTickers(config().getInteger("tickers"))
 
         vertx.eventBus().registerCodec(TickerListCodec())
-                .consumer<String>(Address.data_service.name){ m ->
+                .consumer<String>(AddressDataService){ m ->
             m.reply(tickers, DeliveryOptions().setCodecName(tickerListCodec))
         }
 
