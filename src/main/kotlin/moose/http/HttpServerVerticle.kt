@@ -17,6 +17,7 @@ import moose.Address
 import moose.MarketDataAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.woelker.jimix.vertx.JimixVertxHandler
 import java.time.LocalDate
 
 class HttpServerVerticle() : AbstractVerticle() {
@@ -35,6 +36,8 @@ class HttpServerVerticle() : AbstractVerticle() {
         router.get("/").handler { ctx -> this.indexPage(ctx)}
         //  static contents
         router.route("/static/*").handler(StaticHandler.create())
+
+
         //  API
         val api = Router.router(vertx)
         ///  market data init paint
@@ -57,6 +60,7 @@ class HttpServerVerticle() : AbstractVerticle() {
                 promise.fail(ar.cause())
             }
         }
+
     }
 
     private fun indexPage(routingContext: RoutingContext){

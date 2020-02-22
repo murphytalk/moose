@@ -33,6 +33,10 @@ dependencies {
     implementation("io.vertx:vertx-config-yaml")
     implementation("io.vertx:vertx-redis-client")
     implementation("io.vertx:vertx-lang-kotlin")
+    implementation("io.vertx:vertx-dropwizard-metrics")
+    //
+    implementation("io.hawt:hawtio-embedded:2.9.1")
+    implementation("org.woelker.jimix:jimix-vertx:2.1.1")
     //log
     implementation("ch.qos.logback:logback-classic:1.2.3")
 
@@ -57,8 +61,22 @@ tasks.withType<KotlinCompile> {
 }
 
 tasks{
-    test {
-        testLogging.showExceptions = true
+    testlogger {
+        //theme = "standard"
+        showExceptions = true
+        showStackTraces = true
+        showFullStackTraces = false
+        showCauses = true
+        slowThreshold = 2000
+        showSummary = true
+        showSimpleNames = false
+        showPassed = true
+        showSkipped = true
+        showFailed = true
+        showStandardStreams = true
+        showPassedStandardStreams = true
+        showSkippedStandardStreams = true
+        showFailedStandardStreams = true
     }
     shadowJar{
         archiveVersion.set(projectVersion)

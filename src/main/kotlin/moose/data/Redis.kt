@@ -13,13 +13,8 @@ import kotlin.math.pow
 
 const val MAX_RECONNECT_RETRIES = 10
 
-interface Cache{
-    fun publish(marketData: MarketData)
-    fun connect(promise: Promise<Void>)
-    fun disconnect()
-}
-
-class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, private val logger: Logger? = null): Cache{
+// see the Java class that extends this for the reason
+open class RedisKotlin (private val vertx: Vertx, private val hostname: String?, private val port :Int?, protected val logger: Logger? = null){
     private var redis: Redis? = null
     var api: RedisAPI? = null
 
@@ -35,7 +30,7 @@ class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, private va
         }
     }
 
-    override fun connect(promise: Promise<Void>) {
+    fun connect(promise: Promise<Void>) {
         if ( port == null || hostname == null){
             promise.complete()
             return
@@ -50,17 +45,18 @@ class Redis (val vertx: Vertx, val hostname: String?, val port :Int?, private va
         }
     }
 
-    override fun disconnect(){
+    fun disconnect(){
         redis?.close()
     }
 
-    override fun publish(marketData: MarketData){
-        api?.hmset(listOf(
+    open fun publish(marketData: MarketData){
+       // see the Java version
+       api?.hmset(listOf(
                 marketData.ticker.name,
                 "price", marketData.payload.price.toString(),
                 "received_time", marketData.payload.receivedTime.toString(),
                 "published_time", marketData.publishTime.toString()
-        )){
+        )) {
             if(it.succeeded()) {
                 logger?.debug("Saved to Redis: {}",marketData)
             }

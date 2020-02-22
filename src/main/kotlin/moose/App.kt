@@ -20,6 +20,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import io.hawt.embedded.Main
 
 enum class Address {
     marketdata_publisher,
@@ -131,6 +132,11 @@ class MainVerticle : AbstractVerticle() {
                        vertx.deploymentIDs().forEach { vertx.undeploy(it) }
                    }
                })
+
+               System.setProperty("hawtio.authenticationEnabled", "false")
+               val hawtio = Main()
+               hawtio.war = "file:///home/mu/Downloads/hawtio-default-2.9.1.war"
+               hawtio.run()
 
                promise.complete()
            } else {

@@ -9,8 +9,6 @@ import moose.Address
 import moose.ErrorCodes
 import moose.MarketDataAction
 import moose.Timestamp
-import moose.data.Cache
-import moose.data.DataService
 import moose.data.Redis
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,7 +20,7 @@ class MarketDataPublisher : AbstractVerticle() {
     }
 
     private val snapshot = mutableMapOf<String, MarketData>()
-    private var redis: Cache? = null
+    private var redis: Redis? = null
 
     // use data class ?
     // https://github.com/vert-x3/vertx-lang-kotlin/issues/43

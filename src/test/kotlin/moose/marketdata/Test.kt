@@ -20,7 +20,7 @@ import io.vertx.kotlin.core.json.obj
 import moose.Address
 import moose.MarketDataAction
 import moose.Timestamp
-import moose.data.Cache
+import moose.data.Redis
 import moose.http.HttpServerVerticle
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -104,7 +104,8 @@ class TestMarketDataPublisher {
         val async = ctx.async()
         val vertx = rule.vertx()
 
-        val redis: Cache = mock();
+        //to mock a final class : https://www.baeldung.com/mockito-final
+        val redis: Redis = mock();
         // thenAnswer() is delayed, only called when the mocked function is getting called
         whenever(redis.publish(any())).thenAnswer {
             verify(redis).publish(check{
