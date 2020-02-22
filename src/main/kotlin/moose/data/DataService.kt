@@ -4,8 +4,6 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
 import io.vertx.redis.client.Response
 import moose.Address
 import moose.marketdata.Generator
@@ -21,8 +19,8 @@ class DataService : AbstractVerticle() {
     }
 
     private var tickers : List<Ticker>? = null
-    private var redisSub: Redis? = null
-    private var redisGet: Redis? = null
+    private var redisSub: AbstractRedis? = null
+    private var redisGet: AbstractRedis? = null
 
     override fun start(promise: Promise<Void>){
         // in the real world the list could be loaded from an external storage e.g. DB

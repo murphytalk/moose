@@ -21,6 +21,11 @@ repositories {
     mavenCentral()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_13
+    targetCompatibility = JavaVersion.VERSION_13
+}
+
 dependencies {
     //kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -33,10 +38,6 @@ dependencies {
     implementation("io.vertx:vertx-config-yaml")
     implementation("io.vertx:vertx-redis-client")
     implementation("io.vertx:vertx-lang-kotlin")
-    implementation("io.vertx:vertx-dropwizard-metrics")
-    //
-    implementation("io.hawt:hawtio-embedded:2.9.1")
-    implementation("org.woelker.jimix:jimix-vertx:2.1.1")
     //log
     implementation("ch.qos.logback:logback-classic:1.2.3")
 

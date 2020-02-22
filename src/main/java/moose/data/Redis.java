@@ -11,8 +11,14 @@ import java.util.List;
 
 /* Why this Java version
 
-   As of now, the Kotlin compiler has yet to take the advantage of JVM instruction invokedynamic to call lambdas,
+   As of now, the Kotlin compiler has yet to take the advantage of JVM instruction invokedynamic
    see https://youtrack.jetbrains.com/issue/KT-26060
+
+   But in this particular case, since the lambda has to capture the closure,
+   the Java version (use invokedynamic to generate the lambda code and then cache it)'s performance is almost same as
+   that of Kotlin version (create an anonymous class every time)
+
+   See https://stackoverflow.com/questions/30002380/why-are-java-8-lambdas-invoked-using-invokedynamic
 */
 public class Redis extends AbstractRedis {
     public Redis(@NotNull Vertx vertx, @Nullable String hostname, @Nullable Integer port, @Nullable Logger logger) {

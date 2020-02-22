@@ -17,7 +17,6 @@ import moose.Address
 import moose.MarketDataAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.woelker.jimix.vertx.JimixVertxHandler
 import java.time.LocalDate
 
 class HttpServerVerticle() : AbstractVerticle() {
