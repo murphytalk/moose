@@ -1,3 +1,5 @@
+![CI](https://github.com/murphytalk/moose/workflows/CI/badge.svg?branch=vertx)
+
 # What is this
 
 This is a standalone app to play with my PoC ideas.
