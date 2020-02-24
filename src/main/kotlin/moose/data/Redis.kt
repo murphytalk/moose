@@ -14,9 +14,10 @@ import kotlin.math.pow
 const val MAX_RECONNECT_RETRIES = 10
 
 // see the Java class that extends this for the reason
-abstract class AbstractRedis (private val vertx: Vertx, private val hostname: String?, private val port :Int?, protected val logger: Logger? = null){
+open class KotlinRedis (private val vertx: Vertx, hostname: String?, port :Int?, additionalRedisOpt : RedisOptions = RedisOptions(), protected val logger: Logger? = null){
     private var redis: Redis? = null
     var api: RedisAPI? = null
+    private val redisOptions : RedisOptions = if (port==null) RedisOptions(additionalRedisOpt) else RedisOptions(additionalRedisOpt).setEndpoint(SocketAddress.inetSocketAddress(port, hostname))
 
     fun setSubscriber(keyPattern :String, handler: (Response) -> Unit){
         api?.psubscribe(listOf(keyPattern)){
@@ -31,7 +32,7 @@ abstract class AbstractRedis (private val vertx: Vertx, private val hostname: St
     }
 
     fun connect(promise: Promise<Void>) {
-        if ( port == null || hostname == null){
+        if (redisOptions.endpoints == null){
             promise.complete()
             return
         }
@@ -67,11 +68,11 @@ abstract class AbstractRedis (private val vertx: Vertx, private val hostname: St
     }
 
     private fun createRedisClient(handler: (AsyncResult<Redis>) -> Unit){
-        logger?.info("Connecting to Redis @ $hostname:$port")
-        redis = Redis.createClient(vertx, RedisOptions().setEndpoint(SocketAddress.inetSocketAddress(port!!, hostname)))
+        logger?.info("Connecting to Redis ${redisOptions.endpoint}")
+        redis = Redis.createClient(vertx, redisOptions)
         redis?.connect{
             if(it.succeeded()){
-                logger?.info("Connected to Redis @ $hostname:$port")
+                logger?.info("Connected to Redis ${redisOptions.endpoint}")
                 val c = it.result()
                 val exceptionHandler: (Throwable) -> Unit = { e ->
                     logger?.error("Redis exception {}", e.message)

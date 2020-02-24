@@ -5,6 +5,7 @@ import io.vertx.core.Promise
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.redis.client.RedisOptions
 import moose.*
 import moose.data.Redis
 import org.slf4j.Logger
@@ -45,7 +46,7 @@ class MarketDataPublisher : AbstractVerticle() {
             }
         }
         if(redis == null) {
-            redis = Redis(vertx, config().getString("hostname"), config().getInteger("port"), logger)
+            redis = Redis(vertx, config().getString("hostname"), config().getInteger("port"), RedisOptions(), logger)
             redis?.connect(promise)
         }
         else promise.complete()

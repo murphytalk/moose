@@ -1,6 +1,7 @@
 package moose.data;
 
 import io.vertx.core.Vertx;
+import io.vertx.redis.client.RedisOptions;
 import moose.marketdata.MarketData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +21,9 @@ import java.util.List;
 
    See https://stackoverflow.com/questions/30002380/why-are-java-8-lambdas-invoked-using-invokedynamic
 */
-public class Redis extends AbstractRedis {
-    public Redis(@NotNull Vertx vertx, @Nullable String hostname, @Nullable Integer port, @Nullable Logger logger) {
-        super(vertx, hostname, port, logger);
+public class Redis extends KotlinRedis {
+    public Redis(@NotNull Vertx vertx, @Nullable String hostname, @Nullable Integer port, @Nullable RedisOptions redisOptions, @Nullable Logger logger) {
+        super(vertx, hostname, port, redisOptions, logger);
     }
 
     @Override

@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.redis.client.RedisOptions
 import io.vertx.redis.client.Response
 import moose.AddressDataService
 import moose.marketdata.Generator
@@ -19,8 +20,8 @@ class DataService : AbstractVerticle() {
     }
 
     private var tickers : List<Ticker>? = null
-    private var redisSub: AbstractRedis? = null
-    private var redisGet: AbstractRedis? = null
+    private var redisSub: KotlinRedis? = null
+    private var redisGet: KotlinRedis? = null
 
     override fun start(promise: Promise<Void>){
         // in the real world the list could be loaded from an external storage e.g. DB
@@ -34,13 +35,13 @@ class DataService : AbstractVerticle() {
         val redisConfig = config().getJsonObject("redis")
         val host = redisConfig.getString("hostname")
         val port = redisConfig.getInteger("port")
-        redisSub = Redis(vertx, host, port, logger)
+        redisSub = Redis(vertx, host, port, RedisOptions(), logger)
 
         Future.future<Void> {
             redisSub?.connect(it)
         }.compose {
             val getPromise = Promise.promise<Void>()
-            redisGet = Redis(vertx, host, port, logger)
+            redisGet = Redis(vertx, host, port, RedisOptions(),logger)
             redisGet?.connect(getPromise)
             getPromise.future()
         }.setHandler{
