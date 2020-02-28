@@ -54,7 +54,6 @@ class TestRedis{
         val vertx = rule.vertx()
         vertx.deployVerticle(v)
         logger.info("verticle deployed")
-        logger.info("lock notified")
         async.awaitSuccess()
         logger.info("done")
     }
