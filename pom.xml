@@ -11,7 +11,7 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
         <java.version>13</java.version>
-        <vertx.version>3.8.4</vertx.version>
+        <vertx.version>3.9.4</vertx.version>
         <main.verticle>moose.MainVerticle</main.verticle>
     </properties>
 
