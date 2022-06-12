@@ -19,9 +19,9 @@ class DataService : AbstractVerticle() {
         val logger: Logger = LoggerFactory.getLogger(DataService::class.java)
     }
 
-    private var tickers : List<Ticker>? = null
-    private var redisSub: KotlinRedis? = null
-    private var redisGet: KotlinRedis? = null
+    private lateinit var tickers : List<Ticker>
+    private lateinit var redisSub: KotlinRedis
+    private lateinit var redisGet: KotlinRedis
 
     override fun start(promise: Promise<Void>){
         // in the real world the list could be loaded from an external storage e.g. DB
@@ -37,19 +37,18 @@ class DataService : AbstractVerticle() {
         val port = redisConfig.getInteger("port")
         redisSub = Redis(vertx, host, port, RedisOptions(), logger)
 
-        Future.future<Void> {
-            redisSub?.connect(it)
+        Future.future {
+            redisSub.connect(it)
         }.compose {
             val getPromise = Promise.promise<Void>()
             redisGet = Redis(vertx, host, port, RedisOptions(),logger)
-            redisGet?.connect(getPromise)
+            redisGet.connect(getPromise)
             getPromise.future()
-        }.setHandler{
-            if(it.succeeded()){
-                redisSub?.setSubscriber("*",::handleSub)
-                promise.complete()
-            } else promise.fail(it.cause())
+        }.onSuccess {
+            redisSub?.setSubscriber("*",::handleSub)
+            promise.complete()
        }
+       .onFailure { promise.fail(it) }
     }
 
     private fun handleSub(res:Response){

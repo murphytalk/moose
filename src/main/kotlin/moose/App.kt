@@ -39,9 +39,9 @@ object Timestamp {
 }
 
 
-class MainVerticle : AbstractVerticle() {
+class MktDataViaRedis : AbstractVerticle() {
     private companion object {
-        val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
+        val logger: Logger = LoggerFactory.getLogger(MktDataViaRedis::class.java)
     }
 
     private inner class MarketDataEndpoint : EndPoint {
@@ -108,30 +108,28 @@ class MainVerticle : AbstractVerticle() {
                    tickersPromise.complete(tickers)
                }
            }
-       }.setHandler { ar ->
-           if(ar.succeeded()) {
-               val tickers = ar.result()
-               val genConfig = configFuture.result().getJsonObject("generator")
-               Generator.start(
-                       tickers,
-                       genConfig.getInteger("min_price"),
-                       genConfig.getInteger("max_price"),
-                       genConfig.getInteger("min_interval"),
-                       genConfig.getInteger("max_interval"),
-                       MarketDataEndpoint())
-
-               Runtime.getRuntime().addShutdownHook(object:Thread(){
-                   override fun run(){
-                       logger.info("Undeploying verticles")
-                       vertx.deploymentIDs().forEach { vertx.undeploy(it) }
-                   }
-               })
-
-               promise.complete()
-           } else {
-               promise.fail(ar.cause())
-           }
        }
+       .onSuccess { tickers ->
+           val genConfig = configFuture.result().getJsonObject("generator")
+           Generator.start(
+               tickers,
+               genConfig.getInteger("min_price"),
+               genConfig.getInteger("max_price"),
+               genConfig.getInteger("min_interval"),
+               genConfig.getInteger("max_interval"),
+               MarketDataEndpoint()
+           )
+
+           Runtime.getRuntime().addShutdownHook(object : Thread() {
+               override fun run() {
+                   logger.info("Undeploying verticles")
+                   vertx.deploymentIDs().forEach { vertx.undeploy(it) }
+               }
+           })
+
+           promise.complete()
+       }
+       .onFailure { promise.fail(it) }
     }
 
     override fun stop() {

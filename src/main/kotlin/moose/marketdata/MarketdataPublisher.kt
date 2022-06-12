@@ -7,7 +7,6 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.redis.client.RedisOptions
 import moose.*
-import moose.data.Redis
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.ZoneId

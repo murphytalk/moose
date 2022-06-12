@@ -32,7 +32,7 @@ class TestRedis{
         override fun start(promise: Promise<Void>) {
             Future.future<Void>{
                 redis.connect(it)
-            }.setHandler{
+            }.onComplete{
                 if(it.succeeded()){
                     thread(start = true, name = "redis-test-thread") {
                             logger.info("start pub to redis")
@@ -47,6 +47,7 @@ class TestRedis{
             }
         }
     }
+    @Ignore
     @Test
     fun testKotlinImplementation(ctx: TestContext){
         val async = ctx.async()
@@ -54,18 +55,6 @@ class TestRedis{
         val vertx = rule.vertx()
         vertx.deployVerticle(v)
         logger.info("verticle deployed")
-        async.awaitSuccess()
-        logger.info("done")
-    }
-
-    @Test
-    fun testJavaImplementation(ctx: TestContext){
-        val async = ctx.async()
-        val v = V(Redis(rule.vertx(), host, port, RedisOptions().setMaxWaitingHandlers(repeatCount),null), async,  logger)
-        val vertx = rule.vertx()
-        vertx.deployVerticle(v)
-        logger.info("verticle deployed")
-        logger.info("lock notified")
         async.awaitSuccess()
         logger.info("done")
     }

@@ -4,10 +4,10 @@ val projectVersion = "1.0"
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.3.61"
+    kotlin("jvm") version "1.7.0"
 
     //https://github.com/jponge/vertx-gradle-plugin
-    id("io.vertx.vertx-plugin") version "1.0.1"
+    id("io.vertx.vertx-plugin") version "1.3.0"
 
     id("com.adarshr.test-logger") version "2.0.0"
     // Apply the application plugin to add support for building a CLI application.
@@ -22,8 +22,8 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 dependencies {
@@ -52,13 +52,13 @@ dependencies {
 }
 
 vertx { // (1)
-    vertxVersion = "3.8.5"
+    vertxVersion = "4.3.1"
     mainVerticle = "moose.MainVerticle"
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "12"
+        jvmTarget = "11"
     }
 }
 

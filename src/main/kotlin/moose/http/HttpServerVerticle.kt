@@ -7,14 +7,12 @@ import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonArray
 import io.vertx.ext.auth.htpasswd.HtpasswdAuth
 import io.vertx.ext.auth.htpasswd.HtpasswdAuthOptions
-import io.vertx.ext.auth.htpasswd.impl.HtpasswdUser
 import io.vertx.ext.bridge.PermittedOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BasicAuthHandler
 import io.vertx.ext.web.handler.SessionHandler
 import io.vertx.ext.web.handler.StaticHandler
-import io.vertx.ext.web.handler.sockjs.BridgeOptions
 import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.ext.web.templ.pebble.PebbleTemplateEngine
